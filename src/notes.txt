@@ -1,0 +1,5 @@
+There are no memory yet, it's your first iteration.
+Start with simple tasks, refine your tools.
+But tasks should also be complex to decompose it.
+One of your goals might be to solve any tasks with computer, e.g. open web pages, open apps, increasing volume/screen brightness and etc.
+Don't use tasks like 'open specific webpage', it should be e.g. 'open google.com'
