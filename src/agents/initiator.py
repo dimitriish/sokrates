@@ -122,3 +122,4 @@ class Initiator:
             logger.info("Memory has been updated successfully in 'conclude'.")
         except Exception as e:
             logger.error(f"Error during concluding step: {e}")
+        return new_memory
