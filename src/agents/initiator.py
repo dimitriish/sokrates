@@ -19,7 +19,7 @@ You have list of tools to do task. Tools can solve atomic tasks. Here is a list 
 {list_tool}
 Based on memory:\n{memory}
 Generate a new task. The task should be clear, specific, not abstract and achievable as a user request.
-Each iteration you need to do something new, don't repeat the same tasks."""
+Each iteration you need to do something new, don't generate tasks that only reuses existing tools."""
 
 
 class Initiator:
