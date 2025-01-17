@@ -31,7 +31,7 @@ class Critic:
             'output': ...,
             'errors': ...,
             'chosen_tool': 'ToolName',
-            'created_tool': bool
+            'created_tool': 'ToolName',
           }
 
         The Critic will:
@@ -90,17 +90,17 @@ class Critic:
                 parsed = json.loads(self._extract_json(response))
                 # Ensure the required fields are present; if not, fallback
                 if "is_correct" not in parsed or "report" not in parsed:
-                    if actor_output.get("created_tool", False):
+                    if actor_output.get("created_tool") == actor_output.get("chosen_tool"):
                         self.tool_manager.delete_tool(chosen_tool)
                     return {
                         "is_correct": actor_output.get("is_correct", False),
                         "report": "LLM did not provide required fields. Using fallback.",
                     }
-                if actor_output.get("created_tool", False) and (not is_executable_script(tool_code) or not parsed['is_correct']):
+                if actor_output.get("created_tool") == actor_output.get("chosen_tool") and (not is_executable_script(tool_code) or not parsed['is_correct']):
                     self.tool_manager.delete_tool(chosen_tool)
                 return parsed
             except json.JSONDecodeError:
-                if actor_output.get("created_tool", False):
+                if actor_output.get("created_tool") == actor_output.get("chosen_tool"):
                     self.tool_manager.delete_tool(chosen_tool)
                 print(f'Json parsing failed on attempt {attempt}')
 

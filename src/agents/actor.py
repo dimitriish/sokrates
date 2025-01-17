@@ -26,12 +26,12 @@ class Actor:
             "completed": bool,
             "output": "...",
             "errors": "..." or None,
-            "chosen_tool": "..."
-            "created_tool": bool
+            "chosen_tool": "...",
+            "created_tool": "...",
             "tool_args": {...}
         }
         """
-        result = {"completed": False, "output": None, "errors": None, "chosen_tool": None, "created_tool": False, "tool_args": {}}
+        result = {"completed": False, "output": None, "errors": None, "chosen_tool": None, "created_tool": None, "tool_args": {}}
         tools = self.tool_manager.list_tools()
         decision = self._get_tool_decision(
             subtask_prompt=f"Subtask: {subtask['subtask']}\nExisting Tools:\n{tools}.\nPrevious steps artifacts:{artifacts}\nFeedback from critic after previous try{critic_comment}"
@@ -41,10 +41,11 @@ class Actor:
             return result
         result['tool_args'] = decision.get("tool_args", {})
         if decision.get("action") == "create_tool":
-            if not self.design_tool(subtask, artifacts, critic_comment):
+            new_tool_name = self.design_tool(subtask, artifacts, critic_comment)
+            if not new_tool_name:
                 result["errors"] = "Failed to create new tool."
                 return result
-            result['created_tool'] = True
+            result['created_tool'] = new_tool_name
             tools = self.tool_manager.list_tools()
             decision = self._get_tool_decision(
                 subtask_prompt=f"Subtask: {subtask['subtask']}\nExisting Tools:\n{tools}.\nPrevious steps artifacts:{artifacts}\nFeedback from critic after previous try{critic_comment}"
@@ -88,12 +89,12 @@ class Actor:
         )
         if not design_tool:
             print("Failed to obtain tool creation data from Ollama.")
-            return False
+            return None
 
         required_fields = ["tool_name", "tool_description", "args_description"]
         if not all(field in design_tool for field in required_fields):
             print(f"Design tool data missing required fields: {design_tool}")
-            return False
+            return None
 
         tool_code = self._generate_tool_code(
             tool_name=design_tool["tool_name"],
@@ -103,15 +104,15 @@ class Actor:
 
         if not tool_code:
             print("Failed to generate tool code.")
-            return False
+            return None
 
         save_success = self.tool_manager.add_tool(design_tool["tool_name"], tool_code)
         if not save_success:
             print(f"Failed to save the new tool '{design_tool['tool_name']}'.")
-            return False
+            return None
 
         logger.info(f"Successfully created and saved tool '{design_tool['tool_name']}'.")
-        return True
+        return design_tool["tool_name"]
 
     def _generate_tool_code(self, tool_name: str, tool_description: str, args_description: str) -> str:
         """
