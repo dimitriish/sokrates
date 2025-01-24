@@ -4,13 +4,14 @@ from agents.planner import Planner
 from agents.actor import Actor
 from agents.critic import Critic
 from toolbox.toolbox import ToolManager
+import json
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.debug,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("task_execution.log"),  # Log to a file
+        logging.FileHandler("app.log"),  # Log to a file
         logging.StreamHandler()  # Log to console
     ]
 )
@@ -24,7 +25,9 @@ critic = Critic(tool_manager, model=model)
 
 while True:
     task_info = initiator.generate_task()
+    logging.info(f"{"_"*10}Current task{"_"*10}\n{json.dumps(task_info, indent=4)}")
     plan = planner.create_plan(task_info)
+    logging.info(f"{"_"*10}Generated plan{"_"*10}\n{json.dumps(plan, indent=4)}")
 
     clean_artifacts = {}
     full_artifacts = {}
@@ -52,27 +55,31 @@ while True:
                 full_artifacts[subtask_key].append({
                     'completed': critic_output.get("is_correct", False),
                     'output': actor_output['output'],
+                    'errors': actor_output['errors'],
                     'critic_report': critic_output['report'],
                     'chosen_tool': actor_output['chosen_tool'],
                     'created_tool': actor_output['created_tool']
                 })
 
                 if critic_output.get("is_correct", False):
-                    logging.info(f"Task {subtask_key} completed successfully. Critic Report: {critic_output['report']}")
+                    logging.info(f"Task {subtask_key} completed successfully. Critic Report:\n {json.dumps(critic_output['report'], indent=4)}")
                     clean_artifacts[subtask_key] = {
                         'output': actor_output['output'],
-                        'critic_report': critic_output['report']
+                        'critic_report': critic_output['report'],
+                        'chosen_tool': actor_output['chosen_tool'],
+                        'created_tool': actor_output['created_tool']
                     }
                     break
                 else:
                     attempts += 1
-                    logging.warning(f"Task {subtask_key} failed on attempt {attempts}. Critic Report: {critic_output['report']}")
+                    logging.warning(f"Task {subtask_key} failed on attempt {attempts}. Critic Report:\n {json.dumps(critic_output['report'], indent=4)}")
                     critic_comment = critic_output.get("report", None)
 
             if not clean_artifacts[subtask_key]:
                 logging.error(f"Task {subtask_key} not completed after {max_attempts} attempts.")
-                plan = planner.create_plan(task_info, artifacts=full_artifacts, previous_plan=plan)
-                logging.info(f"Updated plan generated: {plan}")
+                plan = planner.create_plan(task_info, artifacts=clean_artifacts, previous_plan=plan)
+                logging.info(f"{"_"*10} New generated plan{"_"*10}\n{json.dumps(plan, indent=4)}")
+
                 completed_all_subtasks = False
                 break
 
