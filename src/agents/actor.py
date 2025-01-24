@@ -153,7 +153,7 @@ Here is an example of a tool implementation:
 {example_tool}
 
 Implement executable new tool based on description. Answer only python code. Do not add explanation or comments
-You are autonomous agent: avoid any user input calls, you can use arguments instead."""},
+You are autonomous agent: avoid any user input calls, always use arguments instead."""},
         ]
 
         # Attempt to get the tool code from Ollama
